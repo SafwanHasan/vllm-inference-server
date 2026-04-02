@@ -1,6 +1,6 @@
 # LLM Inference Optimization Server
 
-Multi-backend LLM inference optimization system benchmarking **vLLM**, **TensorRT**, and **ONNX Runtime** on consumer hardware (NVIDIA GTX 1650 Super, 4GB VRAM). Demonstrates production inference techniques including PagedAttention, kernel fusion, and quantization.
+Multi-backend LLM inference optimization system benchmarking **vLLM**, **TensorRT**, and **ONNX Runtime**. Demonstrates production inference techniques including PagedAttention, kernel fusion, and quantization.
 
 ## Highlights
 
