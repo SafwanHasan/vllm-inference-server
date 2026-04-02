@@ -14,19 +14,15 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from pathlib import Path
 
-BASE_URL  = "http://localhost:8000/v1"
-MODEL     = "qwen2.5-1.5b"
-HEADERS   = {"Content-Type": "application/json", "Authorization": "Bearer placeholder"}
+BASE_URL = "http://localhost:8000/v1"
+MODEL = "qwen2.5-1.5b"
+HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer placeholder"}
 OUTPUT_DIR = Path("/mnt/d/vllm-project/server")
 
 PROMPTS = {
     "short":  "What is 2 + 2?",
     "medium": "Explain what a transformer neural network is in 3 sentences.",
-    "long": (
-        "Write a detailed explanation of how PagedAttention in vLLM improves "
-        "GPU memory efficiency compared to static KV cache allocation. "
-        "Include concrete numbers and a comparison."
-    ),
+    "long": "Write a detailed explanation of how Attention works in Transformer"
 }
 
 
@@ -40,10 +36,13 @@ def non_streaming_request(prompt: str, max_tokens: int = 256) -> dict:
     }
     t0 = time.perf_counter()
     resp = requests.post(f"{BASE_URL}/chat/completions", json=payload, headers=HEADERS)
+
     elapsed = time.perf_counter() - t0
     resp.raise_for_status()
+
     data = resp.json()
     completion_tokens = data["usage"]["completion_tokens"]
+
     return {
         "elapsed_s": elapsed,
         "completion_tokens": completion_tokens,
@@ -61,6 +60,7 @@ def time_to_first_token(prompt: str, max_tokens: int = 128) -> float:
         "temperature": 0.0,
         "stream": True,
     }
+
     t0 = time.perf_counter()
     with requests.post(
         f"{BASE_URL}/chat/completions", json=payload, headers=HEADERS, stream=True
@@ -69,6 +69,7 @@ def time_to_first_token(prompt: str, max_tokens: int = 128) -> float:
         for line in resp.iter_lines():
             if line and line != b"data: [DONE]":
                 return time.perf_counter() - t0
+
     return -1.0
 
 
@@ -83,12 +84,12 @@ def concurrent_benchmark(prompt: str, n_concurrent: int = 4, max_tokens: int = 1
     wall_time = time.perf_counter() - t0
 
     total_tokens = sum(r["completion_tokens"] for r in results)
-    latencies    = [r["elapsed_s"] for r in results]
+    latencies = [r["elapsed_s"] for r in results]
     return {
         "wall_time_s":    wall_time,
-        "total_tokens":   total_tokens,
-        "aggregate_tps":  total_tokens / wall_time,
-        "avg_latency_s":  statistics.mean(latencies),
+        "total_tokens" :   total_tokens,
+        "aggregate_tps" :  total_tokens / wall_time,
+        "avg_latency_s" :  statistics.mean(latencies),
         "p95_latency_s":  sorted(latencies)[int(0.95 * len(latencies))],
     }
 
@@ -104,13 +105,13 @@ def run_latency_benchmark(n_runs: int = 5) -> dict:
             print(f"  [{label}] run {i+1}: {r['elapsed_s']:.2f}s | "
                   f"{r['completion_tokens']} tokens | {r['tokens_per_sec']:.1f} tok/s")
         results[label] = {
-            "mean_s":  statistics.mean(times),
+            "mean_s" :  statistics.mean(times),
             "stdev_s": statistics.stdev(times) if len(times) > 1 else 0,
-            "min_s":   min(times),
+            "min_s" :   min(times),
             "max_s":   max(times),
         }
         print(f"  [{label}] avg={results[label]['mean_s']:.2f}s "
-              f"±{results[label]['stdev_s']:.2f}s\n")
+              f"+/-{results[label]['stdev_s']:.2f}s\n")
     return results
 
 
@@ -118,10 +119,10 @@ def run_ttft_benchmark(n_runs: int = 5) -> dict:
     print("── Time to First Token ─────────────────────────────────────")
     results = {}
     for label, prompt in PROMPTS.items():
-        times  = [time_to_first_token(prompt) for _ in range(n_runs)]
-        mean   = statistics.mean(times)
+        times= [time_to_first_token(prompt) for _ in range(n_runs)]
+        mean = statistics.mean(times)
         results[label] = mean
-        print(f"  [{label}] TTFT avg: {mean*1000:.0f}ms")
+        print(f" [{label}] TTFT avg: {mean*1000:.0f}ms")
     return results
 
 
@@ -148,7 +149,7 @@ def plot_results(latency_results: dict, ttft_results: dict, concurrency_results:
         fontsize=12, fontweight="bold"
     )
 
-    # Panel 1: avg latency
+    # panel 1: avg latency
     means = [latency_results[l]["mean_s"] for l in labels]
     errs  = [latency_results[l]["stdev_s"] for l in labels]
     axes[0].bar(labels, means, yerr=errs,
@@ -166,7 +167,7 @@ def plot_results(latency_results: dict, ttft_results: dict, concurrency_results:
     axes[1].set_title("Time to First Token (ms)")
     axes[1].set_ylabel("Milliseconds")
 
-    # Panel 3: throughput vs concurrency
+    # panel 3: throughput vs concurrency
     ns       = sorted(concurrency_results.keys())
     tps_vals = [concurrency_results[n]["aggregate_tps"] for n in ns]
     axes[2].plot([str(n) for n in ns], tps_vals,
@@ -179,8 +180,7 @@ def plot_results(latency_results: dict, ttft_results: dict, concurrency_results:
     plt.tight_layout()
     out_path = OUTPUT_DIR / "benchmark_results.png"
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
-    print(f"\n✅  Chart saved to {out_path}")
-    print(f"    Open in Windows Explorer: \\\\wsl$\\Ubuntu-24.04\\mnt\\d\\vllm-project\\server\\benchmark_results.png")
+    print(f"\n  Chart saved to {out_path}")
 
 
 def print_summary(latency_results, ttft_results, concurrency_results):
@@ -202,19 +202,19 @@ def print_summary(latency_results, ttft_results, concurrency_results):
 
 
 if __name__ == "__main__":
-    print("Starting vLLM benchmark — make sure serve.sh is running!\n")
+    print("Starting vLLM benchmark, make sure serve.sh is running!\n")
 
     try:
         models = requests.get(f"{BASE_URL}/models", headers=HEADERS, timeout=5)
         models.raise_for_status()
-        print(f"✅  Server online. Model: {models.json()['data'][0]['id']}\n")
+        print(f" Server online. Model: {models.json()['data'][0]['id']}\n")
     except Exception as e:
-        print(f"❌  Server not reachable: {e}")
-        print("    Start it with: bash /mnt/d/vllm-project/server/serve.sh")
+        print(f" Server not reachable: {e}")
+        print("Start it with: bash /mnt/d/vllm-project/server/serve.sh")
         exit(1)
 
-    latency_results     = run_latency_benchmark(n_runs=5)
-    ttft_results        = run_ttft_benchmark(n_runs=5)
+    latency_results = run_latency_benchmark(n_runs=5)
+    ttft_results= run_ttft_benchmark(n_runs=5)
     concurrency_results = run_concurrency_benchmark()
 
     print_summary(latency_results, ttft_results, concurrency_results)
