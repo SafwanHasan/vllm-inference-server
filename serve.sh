@@ -15,3 +15,5 @@ vllm serve "Qwen/Qwen2.5-1.5B-Instruct" \
     --host 0.0.0.0 \
     --port 8000 \
     --served-model-name "qwen2.5-1.5b"
+
+    

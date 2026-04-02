@@ -19,7 +19,6 @@ def chat(prompt: str, stream: bool = True) -> str:
         max_tokens=512,
         stream=stream,
     )
-
     full_response = ""
     if stream:
         print("Assistant: ", end="", flush=True)

@@ -47,7 +47,7 @@ python benchmark_tensorrt.py
 # Or chat interactively with the vLLM server
 python client.py
 ```
-
+   
 ## Benchmark Results
 
 ### vLLM — Qwen2.5-1.5B-Instruct (4-bit BitsAndBytes, GTX 1650 Super)

@@ -5,7 +5,6 @@ Saves chart to /mnt/d/vllm-project/server/benchmark_results.png
 
 Run AFTER serve.sh is up and showing "Uvicorn running on http://0.0.0.0:8000"
 """
-
 import time
 import statistics
 import concurrent.futures

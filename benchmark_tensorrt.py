@@ -63,8 +63,9 @@ def export_onnx(model, tokenizer) -> None:
     )
     input_ids= dummy_input["input_ids"]
     attention_mask = dummy_input["attention_mask"]
-    token_type_ids = dummy_input["token_type_ids"]
-
+    token_type_ids = dummy_input["token_type_ids"]  
+     
+     
     model.eval()
     with torch.no_grad():
         torch.onnx.export(
